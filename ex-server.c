@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -146,7 +148,7 @@ void cli_exit(client_info *p)
 {
     printf("<%s>,[%hu]:退出了\n", inet_ntoa(p->addr.sin_addr),
            ntohs(p->addr.sin_port));
-    // 如果客户端退出，那么需要将客户端的信息从结构体数组中剔除
+    // 如果客户端退出，那么需要将客户端的信息从结构体链表中剔除
     // 遍历链表，通过con_fd，找到节点，删除节点
     delete_list_node(head, p->con_fd);
     count--;
@@ -164,7 +166,7 @@ void *func(void *arg)
         memset(buf, 0, 100);
         // 读取数据
         ret = recv(p->con_fd, buf, sizeof(buf), 0);
-        if (ret == 0 || strcmp(buf, "bye") == 0)
+        if (ret == 0 || strcmp(buf, "bye") == 0) // ret == 0 相当于收到了ctrl C
         {
             cli_exit(p);
             break;
